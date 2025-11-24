@@ -10,12 +10,47 @@
       margin: 0;
       overflow: hidden;
     }
+
+    canvas {
+      display: block;
+      background: #000;
+    }
   </style>
 </head>
 
 <body>
   <script type="module">
     import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.min.js';
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 100);
+    camera.position.z = 25;
+    camera.position.y = 10;
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(innerWidth, innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const geometry = new THREE.BoxGeometry(10, 10, 10, 16, 16, 16);
+    let material = new THREE.PointsMaterial({
+      color: 0xFFFFFF,
+      size: 0.25,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
+      transparent: true
+    });
+    let mesh = new THREE.Points(geometry, material);
+    scene.add(mesh);
+
+    function animate() {
+      mesh.rotation.x += 0.01;
+      mesh.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    }
+    renderer.setAnimationLoop(animate);
   </script>
 </body>
 
