@@ -74,6 +74,7 @@
         const colors = new Float32Array(n * 3);
         color = color || new THREE.Color(0x00ffff);
         const pointSet = new Set();
+        this.N = n;
 
         for (let i = 0; i < n; i++) {
           if (pointSet.has(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`)) continue;
@@ -106,10 +107,39 @@
 
     const mesh = new THREE.Points(geometry, material);
     scene.add(mesh);
+    const clock = new THREE.Clock();
 
     function animate() {
       mesh.rotation.x += 0.01;
       mesh.rotation.y += 0.01;
+
+      const time = clock.getElapsedTime();
+      const positions = geometry.attributes.position.array;
+      const colors = geometry.attributes.color.array;
+      const count = geometry.N;
+      const speed = 1;
+
+      for (let i = 0; i < count; i++) {
+        const x = positions[i * 3];
+        const y = positions[i * 3 + 1];
+
+        const pulse = Math.sin((y * 0.5) - (time * speed)) +
+          Math.cos((x * 0.2) + (time * 0.5));
+
+        const idx = i * 3;
+        if (pulse > 0.8) {
+          const intensity = (pulse - 0.8) * 5;
+          colors[idx] = 0.2 * intensity;
+          colors[idx + 1] = 1.0 * intensity;
+          colors[idx + 2] = 1.0 * intensity;
+        } else {
+          colors[idx] *= 0.9;
+          colors[idx + 1] *= 0.9;
+          colors[idx + 2] *= 0.9;
+        }
+      }
+      geometry.attributes.color.needsUpdate = true;
+
       renderer.render(scene, camera);
     }
     addEventListener("resize", () => {
