@@ -34,6 +34,21 @@
     renderer.setSize(innerWidth, innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    function pointTexture() {
+      const canvas = new OffscreenCanvas(64, 64);
+      const ctx = canvas.getContext("2d");
+
+      const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.5)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 64, 64);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
     class PointGeometry extends THREE.BufferGeometry {
       constructor(geometry, color = null) {
         super();
@@ -48,9 +63,11 @@
         for (let i = 0; i < n; i++) {
           if (pointSet.has(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`)) continue;
           pointSet.add(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`);
+          
           positions[i * 3] = posArray[i * 3];
           positions[i * 3 + 1] = posArray[i * 3 + 1];
           positions[i * 3 + 2] = posArray[i * 3 + 2];
+
           colors[i * 3] = color.r * 255;
           colors[i * 3 + 1] = color.g * 255;
           colors[i * 3 + 2] = color.b * 255;
@@ -63,7 +80,8 @@
 
     const geometry = new PointGeometry(new THREE.BoxGeometry(10, 10, 10, 16, 16, 16), new THREE.Color(0x00ffff));
     const material = new THREE.PointsMaterial({
-      size: 0.25,
+      size: 0.3,
+      map: pointTexture(),
       vertexColors: true,
       blending: THREE.AdditiveBlending,
       depthTest: false,
