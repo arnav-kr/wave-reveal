@@ -43,8 +43,11 @@
         const positions = new Float32Array(n * 3);
         const colors = new Float32Array(n * 3);
         color = color || new THREE.Color(0x00ffff);
+        const pointSet = new Set();
 
         for (let i = 0; i < n; i++) {
+          if (pointSet.has(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`)) continue;
+          pointSet.add(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`);
           positions[i * 3] = posArray[i * 3];
           positions[i * 3 + 1] = posArray[i * 3 + 1];
           positions[i * 3 + 2] = posArray[i * 3 + 2];
@@ -67,7 +70,7 @@
       transparent: true,
       opacity: 0.6
     });
-    
+
     const mesh = new THREE.Points(geometry, material);
     scene.add(mesh);
 
