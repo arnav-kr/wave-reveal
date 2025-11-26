@@ -20,7 +20,7 @@
 
 <body>
   <script type="module">
-    import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.min.js';
+    import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.min.js";
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x000000, 0.02);
@@ -34,15 +34,41 @@
     renderer.setSize(innerWidth, innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    const geometry = new THREE.BoxGeometry(10, 10, 10, 16, 16, 16);
-    let material = new THREE.PointsMaterial({
-      color: 0xFFFFFF,
+    class PointGeometry extends THREE.BufferGeometry {
+      constructor(geometry, color = null) {
+        super();
+        if (!geometry.attributes.position) throw new Error("invalid geometry");
+        const posArray = geometry.attributes.position.array;
+        const n = posArray.length / 3;
+        const positions = new Float32Array(n * 3);
+        const colors = new Float32Array(n * 3);
+        color = color || new THREE.Color(0x00ffff);
+
+        for (let i = 0; i < n; i++) {
+          positions[i * 3] = posArray[i * 3];
+          positions[i * 3 + 1] = posArray[i * 3 + 1];
+          positions[i * 3 + 2] = posArray[i * 3 + 2];
+          colors[i * 3] = color.r * 255;
+          colors[i * 3 + 1] = color.g * 255;
+          colors[i * 3 + 2] = color.b * 255;
+        }
+
+        this.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        this.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      }
+    }
+
+    const geometry = new PointGeometry(new THREE.BoxGeometry(10, 10, 10, 16, 16, 16), new THREE.Color(0x00ffff));
+    const material = new THREE.PointsMaterial({
       size: 0.25,
+      vertexColors: true,
       blending: THREE.AdditiveBlending,
       depthTest: false,
-      transparent: true
+      transparent: true,
+      opacity: 0.6
     });
-    let mesh = new THREE.Points(geometry, material);
+    
+    const mesh = new THREE.Points(geometry, material);
     scene.add(mesh);
 
     function animate() {
