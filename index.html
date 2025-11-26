@@ -30,8 +30,9 @@
     camera.position.y = 10;
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     document.body.appendChild(renderer.domElement);
 
     function pointTexture() {
@@ -61,9 +62,9 @@
         case "torus":
           return new THREE.TorusGeometry(7, 3, 32, 100);
         case "knot":
-          return new THREE.TorusKnotGeometry(5, 1.5, 184, 20);
+          return new THREE.TorusKnotGeometry(6, 1.8, 200, 30);
         default:
-          return new THREE.TorusKnotGeometry(5, 1.5, 184, 16);
+          return new THREE.TorusKnotGeometry(6, 1.8, 200, 30);
       }
     }
 
