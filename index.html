@@ -40,13 +40,28 @@
 
       const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
       gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.5)');
+      gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.5)');
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, 64, 64);
 
       return new THREE.CanvasTexture(canvas);
+    }
+
+    function newGeometry(type) {
+      switch (type) {
+        case "box":
+          return new THREE.BoxGeometry(10, 10, 10, 16, 16, 16);
+        case "sphere":
+          return new THREE.SphereGeometry(7, 48, 48);
+        case "torus":
+          return new THREE.TorusGeometry(7, 3, 32, 100);
+        case "knot":
+          return new THREE.TorusKnotGeometry(5, 1.5, 184, 20);
+        default:
+          return new THREE.TorusKnotGeometry(5, 1.5, 184, 16);
+      }
     }
 
     class PointGeometry extends THREE.BufferGeometry {
@@ -63,7 +78,7 @@
         for (let i = 0; i < n; i++) {
           if (pointSet.has(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`)) continue;
           pointSet.add(`${posArray[i * 3]},${posArray[i * 3 + 1]},${posArray[i * 3 + 2]}`);
-          
+
           positions[i * 3] = posArray[i * 3];
           positions[i * 3 + 1] = posArray[i * 3 + 1];
           positions[i * 3 + 2] = posArray[i * 3 + 2];
@@ -78,7 +93,7 @@
       }
     }
 
-    const geometry = new PointGeometry(new THREE.BoxGeometry(10, 10, 10, 16, 16, 16), new THREE.Color(0x00ffff));
+    const geometry = new PointGeometry(newGeometry("knot"), new THREE.Color(0x00ffff));
     const material = new THREE.PointsMaterial({
       size: 0.3,
       map: pointTexture(),
