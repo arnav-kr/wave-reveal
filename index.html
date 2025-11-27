@@ -4,23 +4,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three JS Shape Reveal Illustration</title>
+  <title>3D Wave Reveal Animation</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      background: #000;
+    }
+
     body {
       margin: 0;
       overflow: hidden;
+      font-family: "Courier Prime", monospace;
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
     }
 
     canvas {
       display: block;
       background: #000;
     }
+
+    main {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      z-index: 10;
+      color: #cacaca;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      font-weight: normal;
+    }
+
+    label.shape-label {
+      display: block;
+      margin-bottom: 0.2rem;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+    }
+
+    label input {
+      display: none;
+    }
+
+    select,
+    label.file-input {
+      font-family: "Courier Prime", monospace;
+      font-size: 1rem;
+      appearance: none;
+      width: 100%;
+      color: #cacaca;
+      background: transparent;
+      border: 1px solid #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+      margin-bottom: 0.4rem;
+    }
+
+    label.file-input {
+      display: none;
+    }
+
+    select {
+      background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23cacaca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpolyline points="6 9 12 15 18 9"/%3E%3C/svg%3E');
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1rem;
+      padding-right: 2rem;
+    }
+
+    option {
+      background: #000;
+      color: #cacaca;
+    }
+
+    select[data-selected="custom"]+label.file-input {
+      display: flex !important;
+    }
   </style>
+  <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+                "STLLoader": "https://unpkg.com/three@0.180.0/examples/jsm/loaders/STLLoader.js",
+                "OrbitControls": "https://unpkg.com/three@0.180.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
 </head>
 
 <body>
+  <main>
+    <h1>3D Wave Reveal Animation</h1>
+    <label for="shape" class="shape-label">Shape:</label>
+    <select id="shape" onchange="this.dataset.selected = this.value;">
+      <option value="knot" selected>Knot</option>
+      <option value="torus">Torus</option>
+      <option value="sphere">Sphere</option>
+      <option value="box">Box</option>
+      <option value="custom">Custom</option>
+    </select>
+    <label for="file" class="file-input">
+      <span>Upload Custom Model (.stl)</span>
+      <input type="file" id="file" accept=".stl" />
+    </label>
+  </main>
   <script type="module">
-    import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.min.js";
+    import * as THREE from "three";
+    import { STLLoader } from "STLLoader";
+    import { OrbitControls } from "OrbitControls";
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x000000, 0.02);
@@ -33,6 +137,12 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.screenSpacePanning = false;
+
     document.body.appendChild(renderer.domElement);
 
     function pointTexture() {
@@ -105,8 +215,9 @@
       opacity: 0.9
     });
 
-    const mesh = new THREE.Points(geometry, material);
+    let mesh = new THREE.Points(geometry, material);
     scene.add(mesh);
+
     const clock = new THREE.Clock();
 
     function animate() {
@@ -115,20 +226,21 @@
       mesh.rotation.x = time * 0.1;
       mesh.rotation.y = time * 0.15;
 
-      const positions = geometry.attributes.position.array;
-      const colors = geometry.attributes.color.array;
+      const geom = mesh.geometry;
+      const positions = geom.attributes.position.array;
+      const colors = geom.attributes.color.array;
 
       const speed = 1.5;
 
-      for (let i = 0; i < geometry.N; i++) {
+      for (let i = 0; i < geom.N; i++) {
         const o = i * 3;
         const px = positions[o];
         const py = positions[o + 1];
         const pz = positions[o + 2];
 
         const pulse = Math.sin((py * 0.4) + (time * speed)) +
-                      Math.cos((px * 0.2) + (time * speed * 0.5)) +
-                      Math.sin((pz * 0.2) + (time * 0.2));
+          Math.cos((px * 0.2) + (time * speed * 0.5)) +
+          Math.sin((pz * 0.2) + (time * 0.2));
 
         if (pulse > 0.8) {
           const intensity = (pulse - 0.8) * 2.0;
@@ -142,14 +254,70 @@
           colors[o + 2] *= 0.92;
         }
       }
-      geometry.attributes.color.needsUpdate = true;
+      geom.attributes.color.needsUpdate = true;
       renderer.render(scene, camera);
     }
+
+
     addEventListener("resize", () => {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
     });
+
+
+    function fitGeometry(geometry, size = 14) {
+      geometry.center();
+      geometry.computeBoundingBox();
+      const boundingBox = geometry.boundingBox.getSize(new THREE.Vector3());
+      const max = Math.max(boundingBox.x, boundingBox.y, boundingBox.z);
+      if (max > 0) geometry.scale(size / max, size / max, size / max);
+      return geometry;
+    }
+
+    async function getGeometryFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const geometry = new STLLoader().parse(e.target.result);
+            resolve(fitGeometry(geometry));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function updateShape(type, file) {
+      let geom;
+      if (type === "custom") {
+        if (!file) return;
+        geom = new PointGeometry(await getGeometryFromFile(file));
+        if (!geom) return;
+      } else {
+        geom = new PointGeometry(newGeometry(type));
+      }
+      geometry.dispose();
+      scene.remove(mesh);
+      mesh = new THREE.Points(geom, material);
+      scene.add(mesh);
+    }
+
+    document.getElementById("shape").addEventListener("change", (e) => {
+      const value = e.target.value;
+      const file = document.getElementById("file").files[0] || null;
+      updateShape(value, file);
+    });
+
+    document.getElementById("file").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      const shapeSelect = document.getElementById("shape");
+      updateShape("custom", file);
+    });
+
+
     renderer.setAnimationLoop(animate);
   </script>
 </body>
