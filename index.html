@@ -79,13 +79,14 @@
         this.N = n;
 
         for (let i = 0; i < n; i++) {
-          positions[i * 3] = posArray[i * 3];
-          positions[i * 3 + 1] = posArray[i * 3 + 1];
-          positions[i * 3 + 2] = posArray[i * 3 + 2];
+          const o = i * 3;
+          positions[o] = posArray[o];
+          positions[o + 1] = posArray[o + 1];
+          positions[o + 2] = posArray[o + 2];
 
-          colors[i * 3] = 0.0;
-          colors[i * 3 + 1] = 0.1;
-          colors[i * 3 + 2] = 0.2;
+          colors[o] = 0;
+          colors[o + 1] = 0;
+          colors[o + 2] = 0;
         }
 
         this.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -109,36 +110,39 @@
     const clock = new THREE.Clock();
 
     function animate() {
-      mesh.rotation.x += 0.01;
-      mesh.rotation.y += 0.01;
-
       const time = clock.getElapsedTime();
+
+      mesh.rotation.x = time * 0.1;
+      mesh.rotation.y = time * 0.15;
+
       const positions = geometry.attributes.position.array;
       const colors = geometry.attributes.color.array;
-      const count = geometry.N;
-      const speed = 1;
 
-      for (let i = 0; i < count; i++) {
-        const x = positions[i * 3];
-        const y = positions[i * 3 + 1];
+      const speed = 1.5;
 
-        const pulse = Math.sin((y * 0.5) - (time * speed)) +
-          Math.cos((x * 0.2) + (time * 0.5));
+      for (let i = 0; i < geometry.N; i++) {
+        const o = i * 3;
+        const px = positions[o];
+        const py = positions[o + 1];
+        const pz = positions[o + 2];
 
-        const idx = i * 3;
+        const pulse = Math.sin((py * 0.4) + (time * speed)) +
+                      Math.cos((px * 0.2) + (time * speed * 0.5)) +
+                      Math.sin((pz * 0.2) + (time * 0.2));
+
         if (pulse > 0.8) {
-          const intensity = (pulse - 0.8) * 5;
-          colors[idx] = 0.2 * intensity;
-          colors[idx + 1] = 1.0 * intensity;
-          colors[idx + 2] = 1.0 * intensity;
+          const intensity = (pulse - 0.8) * 2.0;
+          colors[o] = THREE.MathUtils.lerp(colors[o], 0 * intensity, 0.1);
+          colors[o + 1] = THREE.MathUtils.lerp(colors[o + 1], 0.1 * intensity, 0.1);
+          colors[o + 2] = THREE.MathUtils.lerp(colors[o + 2], 0.2 * intensity, 0.1);
         } else {
-          colors[idx] *= 0.9;
-          colors[idx + 1] *= 0.9;
-          colors[idx + 2] *= 0.9;
+          // 8%
+          colors[o] *= 0.92;
+          colors[o + 1] *= 0.92;
+          colors[o + 2] *= 0.92;
         }
       }
       geometry.attributes.color.needsUpdate = true;
-
       renderer.render(scene, camera);
     }
     addEventListener("resize", () => {
