@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Wave Reveal Animation</title>
+  <title>3D Wave Reveal Visualizer</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+    @import url("https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap");
 
     * {
       box-sizing: border-box;
@@ -93,6 +93,44 @@
     select[data-selected="custom"]+label.file-input {
       display: flex !important;
     }
+
+    .record-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    button#record-btn {
+      font-family: "Courier Prime", monospace;
+      font-size: 1rem;
+      flex: 1;
+      color: #cacaca;
+      background: transparent;
+      border: 1px solid #aaa;
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button#record-btn.recording {
+      border-color: #ff4444;
+      color: #ff4444;
+      background: rgba(255, 68, 68, 0.1);
+    }
+
+    #record-timer {
+      font-family: "Courier Prime", monospace;
+      font-size: 1rem;
+      color: #ff4444;
+      min-width: 3.5rem;
+      text-align: right;
+      display: block;
+    }
+
+    .hidden {
+      display: none !important;
+    }
   </style>
   <script type="importmap">
         {
@@ -107,7 +145,7 @@
 
 <body>
   <main>
-    <h1>3D Wave Reveal Animation</h1>
+    <h1>3D Wave Reveal Visualizer</h1>
     <label for="shape" class="shape-label">Shape:</label>
     <select id="shape" onchange="this.dataset.selected = this.value;">
       <option value="knot" selected>Knot</option>
@@ -120,6 +158,10 @@
       <span>Upload Custom Model (.stl)</span>
       <input type="file" id="file" accept=".stl" />
     </label>
+    <div class="record-container">
+      <button id="record-btn">Start Recording</button>
+      <span id="record-timer" class="hidden">00:00</span>
+    </div>
   </main>
   <script type="module">
     import * as THREE from "three";
@@ -150,10 +192,10 @@
       const ctx = canvas.getContext("2d");
 
       const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.2, 'rgba(230, 240, 255, 0.8)');
-      gradient.addColorStop(0.5, 'rgba(0, 100, 255, 0.2)');
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+      gradient.addColorStop(0.2, "rgba(230, 240, 255, 0.8)");
+      gradient.addColorStop(0.5, "rgba(0, 100, 255, 0.2)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, 64, 64);
@@ -317,6 +359,65 @@
       updateShape("custom", file);
     });
 
+    const recordBtn = document.getElementById("record-btn");
+    const recordTimer = document.getElementById("record-timer");
+    let mediaRecorder;
+    let chunks = [];
+    let isRecording = false;
+    let startTime;
+    let timerInterval;
+
+    function updateTimer() {
+      const now = Date.now();
+      const diff = now - startTime;
+      const seconds = Math.floor((diff / 1000) % 60);
+      const minutes = Math.floor((diff / 1000 / 60));
+      recordTimer.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }
+
+    recordBtn.addEventListener("click", () => {
+      if (!isRecording) {
+        const stream = renderer.domElement.captureStream(30);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp9" });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) chunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: "video/webm" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = `wave-reveal-${Date.now().toString(16).slice(-6)}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          chunks = [];
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        recordBtn.textContent = "Stop Recording";
+        recordBtn.classList.add("recording");
+
+        startTime = Date.now();
+        recordTimer.classList.remove("hidden");
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordBtn.textContent = "Start Recording";
+        recordBtn.classList.remove("recording");
+
+        clearInterval(timerInterval);
+        recordTimer.classList.add("hidden");
+        recordTimer.textContent = "00:00";
+      }
+    });
 
     renderer.setAnimationLoop(animate);
   </script>
