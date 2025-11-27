@@ -1,5 +1,5 @@
 # Wave Reveal
-![screenshot](image.png)
+![screenshot](screenshot.png)
 
 A Three.js illustration to view and record the wave reveal and fade effect of a vertex geometry of a model.
 
